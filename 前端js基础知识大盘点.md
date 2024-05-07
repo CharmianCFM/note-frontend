@@ -13,14 +13,14 @@ fn.apply(obj, [10, 20, 30])
 console.time可以测试出一段程序的执行时间
 ```javascript
 console.time('A')
-for(let i = 0, i <= 1000000, i++){}
+for(let i = 0; i <= 1000000; i++){}
 console.timeEnd('A') // ‘A’:6.984ms
 ```
 ### 2 实现 (5).add(3).minus(2) 结果为 6
 >  arr.push(10)  arr是 Array 类的实例，可以调用 Array.prototype上的方法，而 push就是其中一个
 >  1 扩展Number类的原型方法: 实现实例调用方法，把该方法加到实例的原型上
 > 2 链式写法，每个方法都需返回这个类的实例
-> 注意： eval(item);
+> 注意： eval(item);  // 把字符串当做脚本代码执行 并且是在全局作用域执行
 
 ```javascript
 ~function () {
@@ -41,15 +41,15 @@ console.timeEnd('A') // ‘A’:6.984ms
   	return this - n;
   }
 
-  // Number.prototype.add = add;
-  // Number.prototype.minus = minus;
+  Number.prototype.add = add;
+  Number.prototype.minus = minus;
 
-  ['add', 'minus'].forEach(item => {
-    Number.prototype[item] = eval(item);
-  });
+  // ['add', 'minus'].forEach(item => {
+  //   Number.prototype[item] = eval(item);
+  // });
 }();
 
-console.log((5).add(3).minus(2));3 嗯 3333333333333333334 v√≥÷÷÷÷÷
+console.log((5).add(3).minus(2)); // 6
 ```
 ### 3 箭头函数和普通函数的区别
 1 箭头函数语法上更简洁。
@@ -105,10 +105,11 @@ document.body.onclick = function () {
   })
 }
 ```
+可以中断的foreach
 ```javascript
 // 回调函数 函数在执行的时候，可以把传递进来的回调函数去执行（执行多次，传参，更改 this）
 function each(arr, callBack) {
-	for(let i = 0; i < arr.length, i++) {
+	for(let i = 0; i < arr.length; i++) {
     // callBack(arr[i], i);
     let flag = callBack.call(arr, arr[i], i);
     if(!flag) {
@@ -116,7 +117,8 @@ function each(arr, callBack) {
     }
   }
 }
-each([10,20,30,40],function (item, index) {
+
+each([10,20,30,40], function (item, index) { // 回调换成箭头函数 上面的函数就不需要调用call了
   // this => Window
   // this => 原始操作数组
   if (index > 1) {
@@ -138,16 +140,16 @@ let f = new Fn();
 // let f = new Fn(); // TypeError: Fn is not a constructor
 ```
 ![截屏2024-01-22 下午1.23.57.png](https://cdn.nlark.com/yuque/0/2024/png/40468162/1705901041353-7cb5c0bd-17a5-4816-b878-9692e07c0afd.png#averageHue=%23f9f9f9&clientId=u2b8c688e-dbc7-4&from=drop&height=163&id=u0a733a3e&originHeight=248&originWidth=484&originalType=binary&ratio=2&rotation=0&showTitle=false&size=30330&status=done&style=none&taskId=ufa2d1fed-931c-427c-bda2-d3d1fac2094&title=&width=319)
-#### 思考题 1 实现each
+#### 思考题 1 实现可中断的each，并返回新数组
 ```javascript
 // 实现
 (function(){
   function each (callBack, obj= window) {
-  const arr = this, newArr = [];
-  for(let i = 0; i < arr.length; i++) {
-      const result = callBack.call(obj, arr[i], i);
-      if(!result) break;
-      newArr.push(result);
+    const arr = this, newArr = [];
+    for(let i = 0; i < arr.length; i++) {
+        const result = callBack.call(obj, arr[i], i);
+        if(!result) break;
+        newArr.push(result);
     }
     return newArr;
   }
@@ -171,7 +173,8 @@ str = str.replace(/zhufeng/g, function(...arg) {
   // arg中存储了每一次大正则匹配的信息和小分组匹配的信息
   return '@'; // 返回啥就替换成啥
 });
-
+// ['zhufeng', 0, 'zhufeng2019zhufeng2029']
+// ['zhufeng', 11, 'zhufeng2019zhufeng2029']
 
 (function (){
     // 将str中的v1替换成v2
@@ -209,7 +212,7 @@ console.log(msg);
 ### 4 把一个字符串的大小写取反，Abc变aBC
 ```javascript
 let str = 'hkjsHSNaj哈哈哈123Ak啊'
-str = str.replace(/[a-zA-Z)/g, content => {
+str = str.replace(/[a-zA-Z]/g, content => {
   // content 每一次正则匹配的结果 h(第1次) k(第2次)
   return content.toUpperCase() === content ? content.toLowerCase() : content.toUpperCase();
 })
@@ -227,7 +230,7 @@ str = str.replace(/[a-zA-Z)/g, content => {
     // this => S
     let res = -1;
     for(let i = 0; i <= this.length - T.length; i++) {
-      if(this.substr(i, T.length) === T) {
+      if(this.substr(i, T.length) === T)  // 从i开始向后截取n个 区分substring
         res = i;
         break;
       }
@@ -289,8 +292,8 @@ url格式：
 5. 哈希值   #video"
 ```javascript
 ((http|https|ftp):\/\/)?     // 协议 ://
-(([\w-]+\.)+[a-z0-9]+)       //域名 ～.~
-((\/[^/]*)+)?                // 请求路径 斜杠加非斜杠 0个或多个
+(([\w-]+\.)+[a-z0-9]+)       //域名 ～.~  [\w-]字母数字下划线和-号
+((\/[^/]*)+)?                // 请求路径 斜杠加非斜杠 *表示0个或多个
 (\?[^#]+)?									// 问号传参
 (#.+)?											// 哈希值
 
@@ -349,7 +352,7 @@ Foo.a = function () {
 Foo.a(); // 4
 let obj = new Foo(); // new的时候执行函数 Foo,为this也就是obj设置了私有属性a； 并且修改了Foo对象的私有属性 a
 obj.a(); // 2  直接在私有属性上找到了 a，就不会去原型上找了
-Foo.a(); // 1
+Foo.a(); // 1  new的时候执行函数了一遍构造函数
 ```
 ### 图片懒加载
 完全滚动到视口中的时候再加载图片
@@ -493,7 +496,7 @@ function $attr(property, value) {
 
 let ary = $attr('class', 'box')
 ```
-### 10 英文字母汉字组成的字符串 给英文单子前后加空格
+### 10 英文字母汉字组成的字符串 给英文单词前后加空格
 ```javascript
 let str = "jk健康jds你好kl啊啊j呀",
   reg = /\b[a-z]+\b/ig;
@@ -506,7 +509,7 @@ console.log(str);
 ```javascript
 let arr = [[1,2,2], [3,4,5,5], [6,7,8,9,[11,12,[12,13,[14]]]], 10];
 ```
-方法1： ES6 新增数组扁平化 flat 方法  Array.prototype.flat
+方法1： ES6 新增数组扁平化 flat 方法  Array.prototype.flat 参数是 depth
 ```javascript
 // 扁平化
 arr = arr.flat(Infinity);
@@ -517,23 +520,71 @@ arr = [...new Set(arr)].sort((a, b) => a - b)
 //总结 一行代码
 arr = Array.from(new Set(arr.flat(Infinity))).sort((a,b) => a-b)
 ```
-补充数组去重方法
+##### 补充：数组去重
+>    1. 数组作为对象的属性
+>    2. for循环+include
+>    3. new Set（）
+>    4. 利用 reduce+includes
+> 
+function unique(arr){
+    return arr.reduce((prev,cur) => prev.includes(cur) ? prev : [...prev,cur],[]);
+}
+var arr = [1,1,'true','true',true,true,15,15,false,false, undefined,undefined, null,null, NaN, NaN,'NaN', 0, 0, 'a', 'a',{},{}];
+console.log(unique(arr));
+// [1, "true", true, 15, false, undefined, null, NaN, "NaN", 0, "a", {…}, {…}]
 
-1. 数组作为对象的属性
-2. for循环+include
-3. new Set（）
+> 1 数组作为对象的属性
+> function unique(arr) {
+    if (!Array.isArray(arr)) {
+        console.log('type error!')
+        return
+    }
+    var arrry= [];
+    var  obj = {};
+    for (var i = 0; i < arr.length; i++) {
+        if (!obj[arr[i]]) {
+            arrry.push(arr[i])
+            obj[arr[i]] = 1
+        } else {
+            obj[arr[i]]++
+        }
+    }
+    return arrry;
+}
+
+var arr = [1,1,'true','true',true,true,15,15,false,false, undefined,undefined, null,null, NaN, NaN,'NaN', 0, 0, 'a', 'a',{},{}];
+console.log(unique(arr))
+//[1, "true", 15, false, undefined, null, NaN, 0, "a", {…}]    //两个true直接去掉了，NaN和{}去重
+
+> 4 暴力解法：两重 for循环
+> function unique(arr){            
+        for(var i=0; i<arr.length; i++){
+            for(var j=i+1; j<arr.length; j++){
+                if(arr[i]==arr[j]){         //第一个等同于第二个，splice方法删除第二个
+                    arr.splice(j,1);
+                    j--;
+                }
+            }
+        }
+return arr;
+}
+var arr = [1,1,'true','true',true,true,15,15,false,false, undefined,undefined, null,null, NaN, NaN,'NaN', 0, 0, 'a', 'a',{},{}];
+console.log(unique(arr))
+//[1, "true", 15, false, undefined, NaN, NaN, "NaN", "a", {…}, {…}]     //NaN和{}没有去重，两个null直接消失了
 
 方法2：把数组直接 toString 变成字符串
 ```javascript
 let arr = [[1,2,2], [3,4,5,5], [6,7,8,9,[11,12,[12,13,[14]]]], 10];
 arr = arr.toString().split(',').map(item => Number(item))
 
+arr.join().split(',') // 成功
+
 // join 也可以 split的时候把,和｜都进行拆分
 arr.join('|').split(/(?:,|\|)/g)
 ```
 ![截屏2024-01-23 下午6.15.47.png](https://cdn.nlark.com/yuque/0/2024/png/40468162/1706004951674-220b80d1-923b-49a0-b256-1634b89c1343.png#averageHue=%23faf7f7&clientId=ub2cf3ac2-654c-4&from=drop&id=u6cae9ae6&originHeight=540&originWidth=1394&originalType=binary&ratio=2&rotation=0&showTitle=false&size=103603&status=done&style=none&taskId=uaf3c1817-975f-4388-8ff7-2b04d823552&title=)
 
-方法3：JSON.stringify(arr) 
+方法3：JSON.stringify(arr)       JSON.parse()
 ```javascript
 arr = JSON.stringify(arr).replace(/(\[|\])/g, '').split(',').map(item => Number(item))
 ```
@@ -619,7 +670,7 @@ console.log(o.d); // undefined
 // 未找到该属性，返回 undefined。
 
 ```
-继承‘方法’：当继承的函数被调用时，[this](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/this) 值指向的是当前继承的对象，而不是拥有该函数属性的原型对象。
+继承‘方法’：当继承的函数被调用时，[this](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/this) 值指向的是当前继承该对象的对象，而不是拥有该函数属性的原型对象。
 ```javascript
 const parent = {
   value: 2,
@@ -838,7 +889,7 @@ function myNew(Con, ...args) {
   // 3 将this指向空对象 执行构造函数
   let res = Con.apply(obj, args);  // Con.call(obj, ...args);
   // 对构造函数返回值做判断，然后返回对应的值（构造函数返回的对象 或 新建的对象）
-  return res instanceofObject ? res : obj;
+  return res instanceof Object ? res : obj;
 }
 ```
 ```javascript
@@ -872,6 +923,8 @@ instanceof 是根据原型__proto__判断的
 
 ### 13 数组合并
 1 localeCompare 排序
+方法返回一个数字，表示参考字符串在排序顺序中是在给定字符串之前、之后还是与之相同
+a.localeCompare(b) a在b之前为负数，之后为正数，相同为 0
 ```javascript
 let arr1 = ['A1','A2','B1','B2','C1','C2'];
 let arr2 = ['A', 'B', 'C'];
@@ -1022,7 +1075,7 @@ JavaScript **变量生命周期**在它声明时初始化。
 局部变量在函数执行完毕后销毁。
 全局变量在页面关闭后销毁。
 函数参数只在函数内起作用，是局部变量。
-回顾：for循环并不是一个函数体，for循环中定义的变量q和i是作用域for循环所在的函数体，和a同级
+回顾：for循环并不是一个函数体，for循环中定义的变量q和i的作用域是for循环所在的函数体，和a同级
 ```javascript
 var a=[];  
 for(var i = 0;i<10;i++){  
@@ -1104,7 +1157,7 @@ console.log(b) // 10
   	null转数字： 0
   	undefined转数字： NaN
 
-    [12] == true  false  Number([12].toString()) == 1
+    [12] == true  false  Number([12].toString()) == 12
   	[] == false		true		0(即Number('')) == 0
     [] == 1				false
   	"1" == 1			true
@@ -1114,7 +1167,7 @@ console.log(b) // 10
 #### 题目
 ```javascript
 var a; // 求 a
-if(a == 1 && a == 2 && a === 3) {
+if(a == 1 && a == 2 && a == 3) {
   console.log(1)
 }
 
@@ -1128,7 +1181,7 @@ var a = {
     return ++this.n;
   }
 }
-if(a == 1 && a == 2 && a === 3) {
+if(a == 1 && a == 2 && a == 3) {
   console.log(1)
 }
 // a.toString()此时调取的是自己的私有方法toString，不再是Object.prototype.toString了
@@ -1137,7 +1190,7 @@ if(a == 1 && a == 2 && a === 3) {
 // shift 删除第一项 返回第一项 改变原数组
 let a = [1, 2, 3];
 a.toString = a.shift;
-if(a == 1 && a == 2 && a === 3) {
+if(a == 1 && a == 2 && a == 3) {
   console.log(1)
 }
 
@@ -1158,8 +1211,8 @@ if(a == 1 && a == 2 && a === 3) {
         this.value = 'hehehe'
       }
     })
-    obj.name;
-    obj.name = 3;
+    obj.name; //'haha'
+    obj.name = 3;  //obj.value = 'hehehe'
 
 // 所以答案是
 Object.defineProperty(window, 'a', {
@@ -1390,7 +1443,7 @@ console.log(arr)
 let nums1 = [1, 2, 2, 1];
 let nums2 = [2, 2];
 let arr = [];
-// nums1.forEach(item => nums2.includes(item) ? arr.push(item) : null);
+//  nums1.forEach(item => nums2.includes(item) ? arr.push(item) : null);  // 不行
 nums1.forEach((item, index) => {
   let n = nums2.indexOf(item);
   if(n >= 0) {
